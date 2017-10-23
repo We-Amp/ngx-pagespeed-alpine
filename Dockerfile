@@ -42,14 +42,14 @@ RUN set -x && \
     PAGESPEED_VERSION=1.12.34.3 && \
     NGX_PAGESPEED_VERSION=1.12.34.3 && \
     cd /tmp && \
-    curl -L https://github.com/ashishk-1/ngx-pagespeed-alpine/blob/ashishk-ngx-pagespeed-alpine34/mod-pagespeed-beta-1.12.34.3.tar.bz2?raw=true | tar -jx && \
+    curl -L https://github.com/We-Amp/ngx-pagespeed-alpine/blob/master/mod-pagespeed-beta-1.12.34.3.tar.bz2?raw=true | tar -jx && \
     curl -L https://github.com/pagespeed/ngx_pagespeed/archive/v${NGX_PAGESPEED_VERSION}-stable.tar.gz | tar -zx && \
     cd /tmp/modpagespeed-${PAGESPEED_VERSION} && \
-    curl -L https://raw.githubusercontent.com/ashishk-1/ngx-pagespeed-alpine/ashishk-ngx-pagespeed-alpine34/patches/automatic_makefile.patch | patch -p1 && \
-    curl -L https://raw.githubusercontent.com/ashishk-1/ngx-pagespeed-alpine/ashishk-ngx-pagespeed-alpine34/patches/libpng_cflags.patch | patch -p1 && \
-    curl -L https://raw.githubusercontent.com/ashishk-1/ngx-pagespeed-alpine/ashishk-ngx-pagespeed-alpine34/patches/pthread_nonrecursive_np.patch | patch -p1 && \
-    curl -L https://raw.githubusercontent.com/ashishk-1/ngx-pagespeed-alpine/ashishk-ngx-pagespeed-alpine34/patches/rename_c_symbols.patch | patch -p1 && \
-    curl -L https://raw.githubusercontent.com/ashishk-1/ngx-pagespeed-alpine/ashishk-ngx-pagespeed-alpine34/patches/stack_trace_posix.patch | patch -p1 && \
+    curl -L https://raw.githubusercontent.com/We-Amp/ngx-pagespeed-alpine/master/patches/automatic_makefile.patch | patch -p1 && \
+    curl -L https://raw.githubusercontent.com/We-Amp/ngx-pagespeed-alpine/master/patches/libpng_cflags.patch | patch -p1 && \
+    curl -L https://raw.githubusercontent.com/We-Amp/ngx-pagespeed-alpine/master/patches/pthread_nonrecursive_np.patch | patch -p1 && \
+    curl -L https://raw.githubusercontent.com/We-Amp/ngx-pagespeed-alpine/master/patches/rename_c_symbols.patch | patch -p1 && \
+    curl -L https://raw.githubusercontent.com/We-Amp/ngx-pagespeed-alpine/master/patches/stack_trace_posix.patch | patch -p1 && \
     ./generate.sh -D use_system_libs=1 -D _GLIBCXX_USE_CXX11_ABI=0 -D use_system_icu=1 && \
     cd /tmp/modpagespeed-${PAGESPEED_VERSION}/src && \
     make BUILDTYPE=Release CXXFLAGS=" -I/usr/include/apr-1 -I/tmp/libpng-${LIBPNG_VERSION} -fPIC -D_GLIBCXX_USE_CXX11_ABI=0" CFLAGS=" -I/usr/include/apr-1 -I/tmp/libpng-${LIBPNG_VERSION} -fPIC -D_GLIBCXX_USE_CXX11_ABI=0" -j4 && \
