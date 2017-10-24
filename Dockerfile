@@ -31,7 +31,7 @@ RUN set -x && \
         zlib-dev && \
     # Build libpng:
     # This sadly requires an old version of http://www.libpng.org/pub/png/libpng.html
-    LIBPNG_VERSION=1.2.56 && \
+    LIBPNG_VERSION=1.2.59 && \
     cd /tmp && \
     curl -L http://prdownloads.sourceforge.net/libpng/libpng-${LIBPNG_VERSION}.tar.gz | tar -zx && \
     cd /tmp/libpng-${LIBPNG_VERSION} && \
@@ -68,7 +68,7 @@ RUN set -x && \
     cp -r /tmp/modpagespeed-${PAGESPEED_VERSION}/src/url /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol/include/ && \
     # Build Nginx with support for PageSpeed:
     # Check http://nginx.org/en/download.html for the latest version.
-    NGINX_VERSION=1.12.1 && \
+    NGINX_VERSION=1.12.2 && \
     cd /tmp && \
     curl -L http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar -zx && \
     cd /tmp/nginx-${NGINX_VERSION} && \
