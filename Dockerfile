@@ -10,7 +10,6 @@ RUN apk --no-cache add \
         libjpeg-turbo \
         icu \
         icu-libs \
-        openssl \
         pcre \
         zlib
 
