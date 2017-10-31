@@ -3,7 +3,6 @@ FROM alpine:3.4
 # Inspired by wernight/docker-alpine-nginx-pagespeed
 
 RUN apk --no-cache add \
-        ca-certificates \
         libuuid \
         apr \
         apr-util \
@@ -19,6 +18,7 @@ RUN set -x && \
         apr-dev \
         apr-util-dev \
         build-base \
+        ca-certificates \
         curl \
         icu-dev \
         libjpeg-turbo-dev \
