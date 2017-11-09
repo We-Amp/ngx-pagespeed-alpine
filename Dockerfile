@@ -78,6 +78,7 @@ RUN set -x && \
         --with-http_ssl_module \
         --with-http_gzip_static_module \
         --with-file-aio \
+        --with-threads \
         --with-http_v2_module \
         --without-http_autoindex_module \
         --without-http_browser_module \
