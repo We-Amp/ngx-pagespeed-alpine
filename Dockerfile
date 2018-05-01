@@ -1,119 +1,230 @@
-FROM alpine:3.4
+ARG ALPINE_VERSION=3.7
 
-# Inspired by wernight/docker-alpine-nginx-pagespeed
+########################
+# Build pagespeed psol #
+########################
+FROM alpine:$ALPINE_VERSION as pagespeed
 
-RUN apk --no-cache add \
-        libuuid \
-        apr \
-        apr-util \
-        libjpeg-turbo \
-        icu \
-        icu-libs \
-        pcre \
-        zlib
+# Check https://github.com/apache/incubator-pagespeed-mod/tags
+ARG MOD_PAGESPEED_TAG=v1.13.35.2
 
-RUN set -x && \
-    apk --no-cache add -t .build-deps \
+RUN apk add --no-cache \
         apache2-dev \
         apr-dev \
         apr-util-dev \
         build-base \
-        ca-certificates \
         curl \
+        gettext-dev \
+        git \
+        gperf \
         icu-dev \
         libjpeg-turbo-dev \
-        linux-headers \
-        gperf \
-        openssl-dev \
+        libpng-dev \
+        libressl-dev \
         pcre-dev \
-        python \
-        zlib-dev && \
-    # Build libpng:
-    # This sadly requires an old version of http://www.libpng.org/pub/png/libpng.html
-    LIBPNG_VERSION=1.2.59 && \
-    cd /tmp && \
-    curl -L http://prdownloads.sourceforge.net/libpng/libpng-${LIBPNG_VERSION}.tar.gz | tar -zx && \
-    cd /tmp/libpng-${LIBPNG_VERSION} && \
-    ./configure --build=$CBUILD --host=$CHOST --prefix=/usr --enable-shared --with-libpng-compat && \
-    make install V=0 && \
-    # Build PageSpeed:
-    # Check https://github.com/pagespeed/ngx_pagespeed/releases for the latest version
-    PAGESPEED_VERSION=1.12.34.3 && \
-    NGX_PAGESPEED_VERSION=1.12.34.3 && \
-    cd /tmp && \
-    curl -L https://github.com/We-Amp/ngx-pagespeed-alpine/blob/master/mod-pagespeed-beta-1.12.34.3.tar.bz2?raw=true | tar -jx && \
-    curl -L https://github.com/pagespeed/ngx_pagespeed/archive/v${NGX_PAGESPEED_VERSION}-stable.tar.gz | tar -zx && \
-    cd /tmp/modpagespeed-${PAGESPEED_VERSION} && \
-    curl -L https://raw.githubusercontent.com/We-Amp/ngx-pagespeed-alpine/master/patches/automatic_makefile.patch | patch -p1 && \
-    curl -L https://raw.githubusercontent.com/We-Amp/ngx-pagespeed-alpine/master/patches/libpng_cflags.patch | patch -p1 && \
-    curl -L https://raw.githubusercontent.com/We-Amp/ngx-pagespeed-alpine/master/patches/pthread_nonrecursive_np.patch | patch -p1 && \
-    curl -L https://raw.githubusercontent.com/We-Amp/ngx-pagespeed-alpine/master/patches/rename_c_symbols.patch | patch -p1 && \
-    curl -L https://raw.githubusercontent.com/We-Amp/ngx-pagespeed-alpine/master/patches/stack_trace_posix.patch | patch -p1 && \
-    ./generate.sh -D use_system_libs=1 -D _GLIBCXX_USE_CXX11_ABI=0 -D use_system_icu=1 && \
-    cd /tmp/modpagespeed-${PAGESPEED_VERSION}/src && \
-    make BUILDTYPE=Release CXXFLAGS=" -I/usr/include/apr-1 -I/tmp/libpng-${LIBPNG_VERSION} -fPIC -D_GLIBCXX_USE_CXX11_ABI=0" CFLAGS=" -I/usr/include/apr-1 -I/tmp/libpng-${LIBPNG_VERSION} -fPIC -D_GLIBCXX_USE_CXX11_ABI=0" -j4 && \
-    cd /tmp/modpagespeed-${PAGESPEED_VERSION}/src/pagespeed/automatic/ && \
-    make psol BUILDTYPE=Release CXXFLAGS=" -I/usr/include/apr-1 -I/tmp/libpng-${LIBPNG_VERSION} -fPIC -D_GLIBCXX_USE_CXX11_ABI=0" CFLAGS=" -I/usr/include/apr-1 -I/tmp/libpng-${LIBPNG_VERSION} -fPIC -D_GLIBCXX_USE_CXX11_ABI=0" && \
-    mkdir -p /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol && \
-    mkdir -p /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol/lib/Release/linux/x64 && \
-    mkdir -p /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol/include/out/Release && \
-    cp -r /tmp/modpagespeed-${PAGESPEED_VERSION}/src/out/Release/obj /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol/include/out/Release/ && \
-    cp -r /tmp/modpagespeed-${PAGESPEED_VERSION}/src/net /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol/include/ && \
-    cp -r /tmp/modpagespeed-${PAGESPEED_VERSION}/src/testing /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol/include/ && \
-    cp -r /tmp/modpagespeed-${PAGESPEED_VERSION}/src/pagespeed /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol/include/ && \
-    cp -r /tmp/modpagespeed-${PAGESPEED_VERSION}/src/third_party /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol/include/ && \
-    cp -r /tmp/modpagespeed-${PAGESPEED_VERSION}/src/tools /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol/include/ && \
-    cp -r /tmp/modpagespeed-${PAGESPEED_VERSION}/src/pagespeed/automatic/pagespeed_automatic.a /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol/lib/Release/linux/x64 && \
-    cp -r /tmp/modpagespeed-${PAGESPEED_VERSION}/src/url /tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable/psol/include/ && \
-    # Build Nginx with support for PageSpeed:
-    # Check http://nginx.org/en/download.html for the latest version.
-    NGINX_VERSION=1.12.2 && \
-    cd /tmp && \
-    curl -L http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz | tar -zx && \
-    cd /tmp/nginx-${NGINX_VERSION} && \
-    LD_LIBRARY_PATH=/tmp/modpagespeed-${PAGESPEED_VERSION}/usr/lib ./configure \
-        --prefix=/var/lib/nginx \
-        --sbin-path=/usr/sbin \
-        --modules-path=/usr/lib/nginx \
-        --with-http_ssl_module \
-        --with-http_gzip_static_module \
-        --with-file-aio \
-        --with-threads \
-        --with-http_v2_module \
-        --without-http_autoindex_module \
-        --without-http_browser_module \
-        --without-http_geo_module \
-        --without-http_map_module \
-        --without-http_memcached_module \
-        --without-http_userid_module \
-        --without-mail_pop3_module \
-        --without-mail_imap_module \
-        --without-mail_smtp_module \
-        --without-http_split_clients_module \
-        --without-http_scgi_module \
-        --without-http_referer_module \
-        --without-http_upstream_ip_hash_module \
+        py-setuptools \
+        zlib-dev \
+    ;
+
+WORKDIR /usr/src
+RUN git clone -b ${MOD_PAGESPEED_TAG} \
+              --recurse-submodules \
+              --depth=1 \
+              -c advice.detachedHead=false \
+              -j`nproc` \
+              https://github.com/apache/incubator-pagespeed-mod.git \
+              modpagespeed \
+    ;
+
+WORKDIR /usr/src/modpagespeed
+
+COPY patches/modpagespeed/*.patch ./
+
+RUN for i in *.patch; do printf "\r\nApplying patch ${i%%.*}\r\n"; patch -p1 < $i || exit 1; done
+
+WORKDIR /usr/src/modpagespeed/tools/gyp
+RUN ./setup.py install
+
+WORKDIR /usr/src/modpagespeed
+
+RUN build/gyp_chromium --depth=. \
+                       -D use_system_libs=1 \
+    && \
+    cd /usr/src/modpagespeed/pagespeed/automatic && \
+    make psol BUILDTYPE=Release \
+              CFLAGS+="-I/usr/include/apr-1" \
+              CXXFLAGS+="-I/usr/include/apr-1 -DUCHAR_TYPE=uint16_t" \
+              -j`nproc` \
+    ;
+
+RUN mkdir -p /usr/src/ngxpagespeed/psol/lib/Release/linux/x64 && \
+    mkdir -p /usr/src/ngxpagespeed/psol/include/out/Release && \
+    mv out/Release/obj /usr/src/ngxpagespeed/psol/include/out/Release/ && \
+    mv pagespeed/automatic/pagespeed_automatic.a /usr/src/ngxpagespeed/psol/lib/Release/linux/x64/ && \
+    mv net \
+       pagespeed \
+       testing \
+       third_party \
+       url \
+       /usr/src/ngxpagespeed/psol/include/ \
+    ;
+
+
+##########################################
+# Build Nginx with support for PageSpeed #
+##########################################
+FROM alpine:$ALPINE_VERSION AS nginx
+
+# Check https://github.com/apache/incubator-pagespeed-ngx/tags
+ARG NGX_PAGESPEED_TAG=v1.13.35.2-stable
+
+# Check http://nginx.org/en/download.html for the latest version.
+ARG NGINX_VERSION=1.14.0
+ARG NGINX_PGPKEY=520A9993A1C052F8
+ARG NGINX_BUILD_CONFIG="\
         --prefix=/etc/nginx \
+        --sbin-path=/usr/sbin/nginx \
+        --modules-path=/usr/lib/nginx/modules \
         --conf-path=/etc/nginx/nginx.conf \
-        --http-log-path=/var/log/nginx/access.log \
         --error-log-path=/var/log/nginx/error.log \
+        --http-log-path=/var/log/nginx/access.log \
         --pid-path=/var/run/nginx.pid \
-        --add-module=/tmp/ngx_pagespeed-${NGX_PAGESPEED_VERSION}-stable \
-        --with-cc-opt="-fPIC -I /usr/include/apr-1" \
-        --with-ld-opt="-luuid -lapr-1 -laprutil-1 -licudata -licuuc -L/tmp/modpagespeed-${PAGESPEED_VERSION}/usr/lib -lpng12 -lturbojpeg -ljpeg" && \
-    make install --silent && \
-    # Clean-up:
-    cd && \
-    apk del .build-deps && \
-    rm -rf /tmp/* && \
-    # forward request and error logs to docker log collector
+        --lock-path=/var/run/nginx.lock \
+        --http-client-body-temp-path=/var/cache/nginx/client_temp \
+        --http-proxy-temp-path=/var/cache/nginx/proxy_temp \
+        --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
+        --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
+        --http-scgi-temp-path=/var/cache/nginx/scgi_temp \
+        --user=nginx \
+        --group=nginx \
+        --with-http_ssl_module \
+        --with-http_realip_module \
+        --with-http_addition_module \
+        --with-http_sub_module \
+        --with-http_dav_module \
+        --with-http_flv_module \
+        --with-http_mp4_module \
+        --with-http_gunzip_module \
+        --with-http_gzip_static_module \
+        --with-http_random_index_module \
+        --with-http_secure_link_module \
+        --with-http_stub_status_module \
+        --with-http_auth_request_module \
+        --with-http_xslt_module=dynamic \
+        --with-http_image_filter_module=dynamic \
+        --with-http_geoip_module=dynamic \
+        --with-threads \
+        --with-stream \
+        --with-stream_ssl_module \
+        --with-stream_ssl_preread_module \
+        --with-stream_realip_module \
+        --with-stream_geoip_module=dynamic \
+        --with-http_slice_module \
+        --with-mail \
+        --with-mail_ssl_module \
+        --with-compat \
+        --with-file-aio \
+        --with-http_v2_module \
+    "
+
+RUN apk add --no-cache \
+        apr-dev \
+        apr-util-dev \
+        build-base \
+        ca-certificates \
+        gd-dev \
+        geoip-dev \
+        git \
+        gnupg \
+        icu-dev \
+        libjpeg-turbo-dev \
+        libpng-dev \
+        libxslt-dev \
+        linux-headers \
+        libressl-dev \
+        pcre-dev \
+        tar \
+        zlib-dev \
+    ;
+
+WORKDIR /usr/src
+RUN git clone -b ${NGX_PAGESPEED_TAG} \
+              --recurse-submodules \
+              --shallow-submodules \
+              --depth=1 \
+              -c advice.detachedHead=false \
+              -j`nproc` \
+              https://github.com/apache/incubator-pagespeed-ngx.git \
+              ngxpagespeed \
+    ;
+
+RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz \
+         https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc && \
+    (gpg --keyserver ha.pool.sks-keyservers.net --keyserver-options timeout=10 --recv-keys ${NGINX_PGPKEY} || \
+     gpg --keyserver hkp://keyserver.ubuntu.com:80 --keyserver-options timeout=10 --recv-keys ${NGINX_PGPKEY} || \
+     gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --keyserver-options timeout=10 --recv-keys $NGINX_PGPKEY} ) && \
+    gpg --trusted-key ${NGINX_PGPKEY} --verify nginx-${NGINX_VERSION}.tar.gz.asc
+
+COPY --from=pagespeed /usr/src/ngxpagespeed /usr/src/ngxpagespeed/
+
+WORKDIR /usr/src/nginx
+
+RUN tar zxf ../nginx-${NGINX_VERSION}.tar.gz --strip-components=1 -C . && \
+    ./configure \
+        ${NGINX_BUILD_CONFIG} \
+        --add-module=/usr/src/ngxpagespeed \
+        --with-ld-opt="-Wl,-z,relro,--start-group -lapr-1 -laprutil-1 -licudata -licuuc -lpng -lturbojpeg -ljpeg" \
+    && \
+    make install -j`nproc`
+
+RUN rm -rf /etc/nginx/html/ && \
+    mkdir /etc/nginx/conf.d/ && \
+    mkdir -p /usr/share/nginx/html/ && \
+    sed -i 's|^</body>|<p><a href="https://www.ngxpagespeed.com/"><img src="pagespeed.png" title="Nginx module for rewriting web pages to reduce latency and bandwidth" /></a></p>\n</body>|' html/index.html && \
+    install -m644 html/index.html /usr/share/nginx/html/ && \
+    install -m644 html/50x.html /usr/share/nginx/html/ && \
+    ln -s ../../usr/lib/nginx/modules /etc/nginx/modules && \
+    strip /usr/sbin/nginx* \
+          /usr/lib/nginx/modules/*.so \
+    ;
+
+COPY conf/nginx.conf /etc/nginx/nginx.conf
+COPY conf/nginx.vh.default.conf /etc/nginx/conf.d/default.conf
+COPY pagespeed.png /usr/share/nginx/html/
+
+
+##########################################
+# Combine everything with minimal layers #
+##########################################
+FROM alpine:$ALPINE_VERSION
+LABEL maintainer="Nico Berlee <nico.berlee@on2it.net>" \
+      version.mod-pagespeed="1.13.35.2" \
+      version.nginx="1.14.0" \
+      version.ngx-pagespeed="1.13.35.2"
+
+COPY --from=pagespeed /usr/bin/envsubst /usr/local/bin
+COPY --from=nginx /usr/sbin/nginx /usr/sbin/nginx
+COPY --from=nginx /usr/lib/nginx/modules/ /usr/lib/nginx/modules/
+COPY --from=nginx /etc/nginx /etc/nginx
+COPY --from=nginx /usr/share/nginx/html/ /usr/share/nginx/html/
+
+RUN apk --no-cache upgrade && \
+    scanelf --needed --nobanner --format '%n#p' /usr/sbin/nginx /usr/lib/nginx/modules/*.so /usr/local/bin/envsubst \
+            | tr ',' '\n' \
+            | awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
+            | xargs apk add --no-cache \
+    && \
+    apk add --no-cache tzdata
+
+RUN addgroup -S nginx && \
+    adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx && \
+    install -g nginx -o nginx -d /var/cache/ngx_pagespeed && \
+    mkdir -p /var/log/nginx && \
     ln -sf /dev/stdout /var/log/nginx/access.log && \
-    ln -sf /dev/stderr /var/log/nginx/error.log && \
-    # Make PageSpeed cache writabl:
-    mkdir -p /var/cache/ngx_pagespeed && \
-    chmod -R o+wr /var/cache/ngx_pagespeed
+    ln -sf /dev/stderr /var/log/nginx/error.log
 
-EXPOSE 80 443
+EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+STOPSIGNAL SIGTERM
 
+CMD ["/usr/sbin/nginx", "-g", "daemon off;"]
