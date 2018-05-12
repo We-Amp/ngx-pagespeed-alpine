@@ -16,7 +16,8 @@ This image should be a 100% compatible drop in replacement for the official ngin
 
 ## Using the Dockerfile
 ### Use docker build command to build an image from dockerfile:
-      $ docker build -t <image_tag> -f <dockerfile_path> .
+  docker build -t <image_tag>  <dockerfile_path> .
+    $ docker build -t ngxpagespeed-alpine37-ngxstable stable/3.7/nginx-stable 
   Refer [this](https://docs.docker.com/engine/reference/commandline/build/) for additional options.
 
 ### Run this container as an independent service:
@@ -28,6 +29,3 @@ This image should be a 100% compatible drop in replacement for the official ngin
 - 2GB of memory
 - an x86_64 compatible processor
 - Docker CE > 17.3.2
-
-## TODO
-- Create a dockerhub repo
