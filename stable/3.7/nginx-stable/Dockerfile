@@ -57,11 +57,23 @@ RUN build/gyp_chromium --depth=. \
               -j`nproc` \
     ;
 
+RUN mkdir -p /usr/src/ngxpagespeed/psol/lib/Release/linux/x64 && \
+    mkdir -p /usr/src/ngxpagespeed/psol/include/out/Release && \
+    cp -R out/Release/obj /usr/src/ngxpagespeed/psol/include/out/Release/ && \
+    cp -R pagespeed/automatic/pagespeed_automatic.a /usr/src/ngxpagespeed/psol/lib/Release/linux/x64/ && \
+    cp -R net \
+          pagespeed \
+          testing \
+          third_party \
+          url \
+          /usr/src/ngxpagespeed/psol/include/ \
+    ;
 
 
 ##########################################
 # Build Nginx with support for PageSpeed #
 ##########################################
+FROM alpine:$ALPINE_VERSION AS nginx
 
 # Check https://github.com/apache/incubator-pagespeed-ngx/tags
 ARG NGX_PAGESPEED_TAG=v1.13.35.2-stable
@@ -146,25 +158,14 @@ RUN git clone -b ${NGX_PAGESPEED_TAG} \
               ngxpagespeed \
     ;
 
-RUN mkdir -p /usr/src/ngxpagespeed/psol/lib/Release/linux/x64 && \
-    mkdir -p /usr/src/ngxpagespeed/psol/include/out/Release && \
-    cd modpagespeed && \
-    mv out/Release/obj /usr/src/ngxpagespeed/psol/include/out/Release/ && \
-    mv pagespeed/automatic/pagespeed_automatic.a /usr/src/ngxpagespeed/psol/lib/Release/linux/x64/ && \
-    mv net \
-       pagespeed \
-       testing \
-       third_party \
-       url \
-       /usr/src/ngxpagespeed/psol/include/ \
-    ;
-
 RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz \
          https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc && \
     (gpg --keyserver ha.pool.sks-keyservers.net --keyserver-options timeout=10 --recv-keys ${NGINX_PGPKEY} || \
      gpg --keyserver hkp://keyserver.ubuntu.com:80 --keyserver-options timeout=10 --recv-keys ${NGINX_PGPKEY} || \
      gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --keyserver-options timeout=10 --recv-keys $NGINX_PGPKEY} ) && \
     gpg --trusted-key ${NGINX_PGPKEY} --verify nginx-${NGINX_VERSION}.tar.gz.asc
+
+COPY --from=pagespeed /usr/src/ngxpagespeed /usr/src/ngxpagespeed/
 
 WORKDIR /usr/src/nginx
 
@@ -202,10 +203,10 @@ LABEL maintainer="Nico Berlee <nico.berlee@on2it.net>" \
       version.ngx-pagespeed="1.13.35.2"
 
 COPY --from=pagespeed /usr/bin/envsubst /usr/local/bin
-COPY --from=pagespeed /usr/sbin/nginx /usr/sbin/nginx
-COPY --from=pagespeed /usr/lib/nginx/modules/ /usr/lib/nginx/modules/
-COPY --from=pagespeed /etc/nginx /etc/nginx
-COPY --from=pagespeed /usr/share/nginx/html/ /usr/share/nginx/html/
+COPY --from=nginx /usr/sbin/nginx /usr/sbin/nginx
+COPY --from=nginx /usr/lib/nginx/modules/ /usr/lib/nginx/modules/
+COPY --from=nginx /etc/nginx /etc/nginx
+COPY --from=nginx /usr/share/nginx/html/ /usr/share/nginx/html/
 
 RUN apk --no-cache upgrade && \
     scanelf --needed --nobanner --format '%n#p' /usr/sbin/nginx /usr/lib/nginx/modules/*.so /usr/local/bin/envsubst \
@@ -227,3 +228,4 @@ EXPOSE 80
 STOPSIGNAL SIGTERM
 
 CMD ["/usr/sbin/nginx", "-g", "daemon off;"]
+
