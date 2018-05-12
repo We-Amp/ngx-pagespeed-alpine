@@ -23,6 +23,11 @@ This image should be a 100% compatible drop in replacement for the official ngin
     $ docker run -d -p 80:80 <image_tag>
   Refer [this](https://docs.docker.com/engine/reference/run/) for additional options.
 
+## Requirements for building:
+- > 3 GB of free diskspace
+- 2GB of memory
+- an x86_64 compatible processor
+- Docker CE > 17.3.2
+
 ## TODO
-- Be 100% compatible with nginx 1.14.0 image on dockerhub when released, for now 100% compatible with 1.12.2 image
 - Create a dockerhub repo
