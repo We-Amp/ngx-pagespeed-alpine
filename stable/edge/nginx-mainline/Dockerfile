@@ -199,7 +199,7 @@ COPY pagespeed.png /usr/share/nginx/html/
 FROM alpine:$ALPINE_VERSION
 LABEL maintainer="Nico Berlee <nico.berlee@on2it.net>" \
       version.mod-pagespeed="1.13.35.2" \
-      version.nginx="1.13.12" \
+      version.nginx="1.15.0" \
       version.ngx-pagespeed="1.13.35.2"
 
 COPY --from=pagespeed /usr/bin/envsubst /usr/local/bin
