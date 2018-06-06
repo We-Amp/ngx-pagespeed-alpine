@@ -79,7 +79,7 @@ FROM alpine:$ALPINE_VERSION AS nginx
 ARG NGX_PAGESPEED_TAG=v1.13.35.2-stable
 
 # Check http://nginx.org/en/download.html for the latest version.
-ARG NGINX_VERSION=1.13.12
+ARG NGINX_VERSION=1.15.0
 ARG NGINX_PGPKEY=520A9993A1C052F8
 ARG NGINX_BUILD_CONFIG="\
         --prefix=/etc/nginx \
