@@ -1,8 +1,8 @@
 # Supported tags and respective `Dockerfile` links
 
-- [`1.13.35.2`, `stable`, `1.13.35`, `1.13`, `1.13.35.2-alpine3.7`, `1.13.35-alpine3.7`, `1.13-alpine3.7`, `stable-alpine3.7`, `1.13.35.2-alpine3.7-ngx1.14`, `1.13.35-alpine3.7-ngx1.14`, `1.13-alpine3.7-ngx1.14`, `stable-alpine3.7-ngx1.14`, `latest` (*stable/3.7/nginx-stable/Dockerfile*)](https://github.com/We-Amp/ngx-pagespeed-alpine/blob/master/stable/3.7/nginx-stable/Dockerfile)
+- [`1.13.35.2`, `stable`, `1.13.35`, `1.13`, `1.13.35.2-alpine3.8`, `1.13.35-alpine3.8`, `1.13-alpine3.8`, `stable-alpine3.8`, `1.13.35.2-alpine3.8-ngx1.14`, `1.13.35-alpine3.8-ngx1.14`, `1.13-alpine3.8-ngx1.14`, `stable-alpine3.8-ngx1.14`, `latest` (*stable/3.8/nginx-stable/Dockerfile*)](https://github.com/We-Amp/ngx-pagespeed-alpine/blob/master/stable/3.8/nginx-stable/Dockerfile)
 - [`1.13.35.2-edge`, `stable-edge`, `edge`, `1.13.35-edge`, `1.13-edge`, `1.13.35.2-edge-ngx1.14`, `1.13.35-edge-ngx1.14`, `1.13-edge-ngx1.14`, `stable-edge-ngx1.14` (*stable/edge/nginx-stable/Dockerfile*)](https://github.com/We-Amp/ngx-pagespeed-alpine/blob/master/stable/edge/nginx-stable/Dockerfile)
-- [`1.13.35.2-alpine3.7-ngx1.15`, `ngx1.15`, `1.13.35-alpine3.7-ngx1.15`, `1.13-alpine3.7-ngx1.15`, `stable-alpine3.7-ngx1.15` (*stable/3.7/nginx-mainline/Dockerfile*)](https://github.com/We-Amp/ngx-pagespeed-alpine/blob/master/stable/3.7/nginx-stable/Dockerfile)
+- [`1.13.35.2-alpine3.8-ngx1.15`, `ngx1.15`, `1.13.35-alpine3.8-ngx1.15`, `1.13-alpine3.8-ngx1.15`, `stable-alpine3.8-ngx1.15` (*stable/3.8/nginx-mainline/Dockerfile*)](https://github.com/We-Amp/ngx-pagespeed-alpine/blob/master/stable/3.8/nginx-stable/Dockerfile)
 - [`1.13.35.2-edge-ngx1.15`, `1.13.35-edge-ngx1.15`, `1.13-edge-ngx1.15`, `stable-edge-ngx1.15` (*stable/edge/nginx-mainline/Dockerfile*)](https://github.com/We-Amp/ngx-pagespeed-alpine/blob/master/stable/edge/nginx-mainline/Dockerfile)
 
 # Quick reference
@@ -159,7 +159,7 @@ This image has the most up-to-date system packages available in the [Alpine Linu
 ## Using the Dockerfile
 ### Use docker build command to build an image from dockerfile:
   docker build -t <image_tag>  <dockerfile_path> .
-    $ docker build -t ngxpagespeed-alpine37-ngxstable stable/3.7/nginx-stable 
+    $ docker build -t ngxpagespeed-alpine38-ngxstable stable/3.8/nginx-stable
   Refer [this](https://docs.docker.com/engine/reference/commandline/build/) for additional options.
 
 ### Run this container as an independent service:
