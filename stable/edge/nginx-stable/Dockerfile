@@ -169,8 +169,13 @@ COPY --from=pagespeed /usr/src/ngxpagespeed /usr/src/ngxpagespeed/
 
 WORKDIR /usr/src/nginx
 
-RUN tar zxf ../nginx-${NGINX_VERSION}.tar.gz --strip-components=1 -C . && \
-    ./configure \
+RUN tar zxf ../nginx-${NGINX_VERSION}.tar.gz --strip-components=1 -C .
+
+COPY patches/nginx/*.patch ./
+
+RUN for i in *.patch; do printf "\r\nApplying patch ${i%%.*}\r\n"; patch -p1 < $i || exit 1; done
+
+RUN ./configure \
         ${NGINX_BUILD_CONFIG} \
         --add-module=/usr/src/ngxpagespeed \
         --with-ld-opt="-Wl,-z,relro,--start-group -lapr-1 -laprutil-1 -licudata -licuuc -lpng -lturbojpeg -ljpeg" \
