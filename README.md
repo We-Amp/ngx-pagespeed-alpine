@@ -1,3 +1,6 @@
+# This repo has been moved to the offcicial Apache ngx_pagespeed repo.
+[https://github.com/apache/incubator-pagespeed-ngx/tree/master/docker]
+
 # Supported tags and respective `Dockerfile` links
 
 - [`1.13.35.2`, `stable`, `1.13.35`, `1.13`, `1.13.35.2-alpine3.8`, `1.13.35-alpine3.8`, `1.13-alpine3.8`, `stable-alpine3.8`, `1.13.35.2-alpine3.8-ngx1.14`, `1.13.35-alpine3.8-ngx1.14`, `1.13-alpine3.8-ngx1.14`, `stable-alpine3.8-ngx1.14`, `latest` (*stable/3.8/nginx-stable/Dockerfile*)](https://github.com/We-Amp/ngx-pagespeed-alpine/blob/master/stable/3.8/nginx-stable/Dockerfile)
